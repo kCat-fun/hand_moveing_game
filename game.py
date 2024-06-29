@@ -24,6 +24,8 @@ class Game:
         self.right_hand_rock_flag = False
         self.left_hand_rock_flag = False
 
+        self.score = 0
+
     def draw(self):
         self.screen.fill((0, 0, 0))
 
@@ -49,7 +51,7 @@ class Game:
 
         self.draw_hands_pos(hands_pos, is_hands_rock)
 
-        if self.frame_count % (80 - min(round(self.frame_count/30.0)), 70) == 30:
+        if self.frame_count % (80 - min(round(self.frame_count/30.0), 70)) == 30:
             random_number = random.random()
             self.enemies.append(Enemy(random_number*self.SCREEN_WIDTH, 0, 0, 10))
 
@@ -77,6 +79,7 @@ class Game:
                             {"x": enemy.pos.x, "y": enemy.pos.y}, enemy.radius
                         )
                     ):
+                        self.score += 1
                         self.enemies.pop(counter1)
                         self.bullets.pop(counter2)
                         counter1 -= 1
@@ -84,10 +87,35 @@ class Game:
                     counter2 += 1
                 counter1 += 1
 
-        text = self.font.render("frameCount: " + str(self.frame_count), True, (255, 255, 255))
-        self.screen.blit(text, (10,10))
+        text1 = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
+        text2 = self.font.render("frameCount: " + str(self.frame_count), True, (255, 255, 255))
+        self.screen.blit(text1, (10,10))
+        self.screen.blit(text2, (450,10))
 
         self.frame_count += 1
+
+    def is_over(self):
+        hands_pos = self.hand_tracking.get_hand_pos()
+        
+        _left_hand_pos = hands_pos["left"]
+        if _left_hand_pos == None:
+            left_hand_pos = {"x": -1, "y": -1}
+        else:
+            left_hand_pos = self.convert_pos_hand_screen(_left_hand_pos["x"], _left_hand_pos["y"])
+        
+        _right_hand_pos = hands_pos["right"]
+        if _right_hand_pos == None:
+            right_hand_pos = {"x": -1, "y": -1}
+        else:
+            right_hand_pos = self.convert_pos_hand_screen(_right_hand_pos["x"], _right_hand_pos["y"])
+        for enemy in self.enemies:
+            if (
+                    self.is_overlap(left_hand_pos, self.player_radius, {"x": enemy.pos.x, "y": enemy.pos.y}, enemy.radius) or\
+                    self.is_overlap(right_hand_pos, self.player_radius, {"x": enemy.pos.x, "y": enemy.pos.y}, enemy.radius) or\
+                    enemy.pos.y - enemy.radius/2.0 > self.SCREEN_HEIGHT\
+            ):
+                    return True
+        return False
 
     def is_overlap(self, pos1, radius1, pos2, radius2):
         return self.check_collision(pos1["x"], pos1["y"], radius1, pos2["x"], pos2["y"], radius2)
