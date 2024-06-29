@@ -1,8 +1,12 @@
+import math
 import pygame
+import random
 from bullet import *
-
+from enemy import *
 class Game:
     def __init__(self, screen, width, height, hand_tracking):
+        self.frame_count = 0
+
         self.screen = screen
         self.SCREEN_WIDTH = width
         self.SCREEN_HEIGHT = height
@@ -14,6 +18,8 @@ class Game:
 
         self.hand_tracking = hand_tracking
         self.bullets = []
+        self.enemies = []
+        self.player_radius = 30
 
         self.right_hand_rock_flag = False
         self.left_hand_rock_flag = False
@@ -24,8 +30,6 @@ class Game:
         hands_pos = self.hand_tracking.get_hand_pos()
         is_hands_rock = self.hand_tracking.is_rock()
         print(hands_pos, is_hands_rock)
-
-        self.draw_hands_pos(hands_pos, is_hands_rock)
 
         if(is_hands_rock["left"]):
             if (not hands_pos["left"] == None) and (not self.left_hand_rock_flag):
@@ -43,6 +47,12 @@ class Game:
         else:
             self.right_hand_rock_flag = False
 
+        self.draw_hands_pos(hands_pos, is_hands_rock)
+
+        if self.frame_count % (80 - min(round(self.frame_count/30.0)), 70) == 30:
+            random_number = random.random()
+            self.enemies.append(Enemy(random_number*self.SCREEN_WIDTH, 0, 0, 10))
+
         if(0 < len(self.bullets)):
             counter: int = 0
             for bullet in self.bullets:
@@ -52,11 +62,45 @@ class Game:
                     self.bullets.pop(counter)
                     counter -= 1
                 counter += 1
+        
+        if(0 < len(self.enemies)):
+            counter1: int = 0
+            for enemy in self.enemies:
+                enemy.update()
+                enemy.draw(self.screen)
 
-        text = self.font.render("bullets: " + str(len(self.bullets)), True, (255, 255, 255))
+                counter2: int = 0
+                for bullet in self.bullets:
+                    if (
+                        self.is_overlap(
+                            {"x": bullet.pos.x, "y": bullet.pos.y}, bullet.radius, 
+                            {"x": enemy.pos.x, "y": enemy.pos.y}, enemy.radius
+                        )
+                    ):
+                        self.enemies.pop(counter1)
+                        self.bullets.pop(counter2)
+                        counter1 -= 1
+                        counter2 -= 1
+                    counter2 += 1
+                counter1 += 1
+
+        text = self.font.render("frameCount: " + str(self.frame_count), True, (255, 255, 255))
         self.screen.blit(text, (10,10))
 
+        self.frame_count += 1
 
+    def is_overlap(self, pos1, radius1, pos2, radius2):
+        return self.check_collision(pos1["x"], pos1["y"], radius1, pos2["x"], pos2["y"], radius2)
+
+    def check_collision(self, x1, y1, r1, x2, y2, r2):
+            # 二つの円の中心の距離を計算
+        distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+        # 中心の距離が二つの円の半径の和以下であれば衝突している
+        if distance <= r1 + r2:
+            return True
+        else:
+            return False
 
     def set_hands(self, hand_tracking):
         self.hand_tracking = hand_tracking
@@ -74,7 +118,7 @@ class Game:
                 self.screen,
                 (200, 255, 255) if is_hands_rock["left"] else (100, 150, 150),
                 (pos["x"], pos["y"]),
-                30,
+                self.player_radius,
             )
 
         if not right_hand_pos == None:
@@ -83,7 +127,7 @@ class Game:
                 self.screen,
                 (255, 200, 255) if is_hands_rock["right"] else (150, 100, 150),
                 (pos["x"], pos["y"]),
-                30,
+                self.player_radius,
             )
 
     def convert_pos_hand_screen(self, x, y):
