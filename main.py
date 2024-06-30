@@ -19,7 +19,11 @@ def main():
     run = True
 
     scene_num: int = 0
-    high_score = 0
+    f = open('high_score.txt', 'r')
+    datalist = f.readlines()
+    f.close()
+    high_score = int(datalist[0])
+    print(high_score)
 
     while run:
         hand_tracking.update()
@@ -30,7 +34,14 @@ def main():
                 game.set_hands(hand_tracking)
                 game.draw()
                 if game.is_over():
-                    result = Result(game.score, high_score)
+                    new_record_flag = False
+                    if high_score < game.score:
+                        with open('high_score.txt', mode='w') as f:
+                            f.write(str(game.score))
+                            high_score = game.score
+                            new_record_flag = True
+
+                    result = Result(game.score, high_score, new_record_flag)
                     scene_num = 1
             case 1:
                 result.draw(screen)

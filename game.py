@@ -19,6 +19,7 @@ class Game:
         self.hand_tracking = hand_tracking
         self.bullets = []
         self.enemies = []
+        self.create_enemies_flag = False
         self.player_radius = 30
 
         self.right_hand_rock_flag = False
@@ -31,7 +32,7 @@ class Game:
 
         hands_pos = self.hand_tracking.get_hand_pos()
         is_hands_rock = self.hand_tracking.is_rock()
-        print(hands_pos, is_hands_rock)
+        # print(hands_pos, is_hands_rock)
 
         if(is_hands_rock["left"]):
             if (not hands_pos["left"] == None) and (not self.left_hand_rock_flag):
@@ -51,9 +52,12 @@ class Game:
 
         self.draw_hands_pos(hands_pos, is_hands_rock)
 
-        if self.frame_count % (80 - min(round(self.frame_count/30.0), 70)) == 30:
-            random_number = random.random()
+        if self.frame_count % (80 - min(round(self.frame_count/30.0), 60)) > 10 and (not self.create_enemies_flag):
+            random_number = (random.random() * 0.8) + 0.1
             self.enemies.append(Enemy(random_number*self.SCREEN_WIDTH, 0, 0, 10))
+            self.create_enemies_flag = True
+        elif self.frame_count % (80 - min(round(self.frame_count/30.0), 60)) < 10:
+            self.create_enemies_flag = False
 
         if(0 < len(self.bullets)):
             counter: int = 0
@@ -90,7 +94,7 @@ class Game:
         text1 = self.font.render("Score: " + str(self.score), True, (255, 255, 255))
         text2 = self.font.render("frameCount: " + str(self.frame_count), True, (255, 255, 255))
         self.screen.blit(text1, (10,10))
-        self.screen.blit(text2, (450,10))
+        self.screen.blit(text2, (420,10))
 
         self.frame_count += 1
 
