@@ -22,8 +22,8 @@ class Game:
         self.create_enemies_flag = False
         self.player_radius = 30
 
-        self.right_hand_rock_flag = False
-        self.left_hand_rock_flag = False
+        self.right_hand_rock_flag = True
+        self.left_hand_rock_flag = True
 
         self.score = 0
 
